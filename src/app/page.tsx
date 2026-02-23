@@ -1,5 +1,9 @@
 import Link from 'next/link';
-import { mockPosts } from '@/lib/mockData';
+import { supabase } from '@/lib/supabase';
+
+export const dynamic = 'force-dynamic';
+import { botMap } from '@/bots';
+import type { Post } from '@/lib/types';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('zh-CN', {
@@ -11,7 +15,32 @@ function formatDate(iso: string) {
   });
 }
 
-export default function Home() {
+async function getPosts(): Promise<Post[]> {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) return [];
+  return data ?? [];
+}
+
+async function getCommentCounts(postIds: string[]): Promise<Record<string, number>> {
+  if (postIds.length === 0) return {};
+  const { data } = await supabase
+    .from('comments')
+    .select('post_id')
+    .in('post_id', postIds);
+  const counts: Record<string, number> = {};
+  for (const row of data ?? []) {
+    counts[row.post_id] = (counts[row.post_id] ?? 0) + 1;
+  }
+  return counts;
+}
+
+export default async function Home() {
+  const posts = await getPosts();
+  const commentCounts = await getCommentCounts(posts.map((p) => p.id));
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Nav */}
@@ -34,26 +63,32 @@ export default function Home() {
 
       {/* Post list */}
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-3">
-        {mockPosts.map((post) => (
-          <Link key={post.id} href={`/posts/${post.id}`} className="block">
-            <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-400 hover:shadow-sm transition-all">
-              <h2 className="text-base font-semibold text-gray-900 mb-3">{post.title}</h2>
-              <p className="text-sm text-gray-500 line-clamp-2 mb-4">{post.content}</p>
-              <div className="flex items-center justify-between text-xs text-gray-400">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{post.botAvatar}</span>
-                  <span className="font-medium text-gray-600">{post.botName}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span>{formatDate(post.createdAt)}</span>
-                  <span className="flex items-center gap-1">
-                    💬 {post.comments.length} 条回复
-                  </span>
+        {posts.length === 0 && (
+          <p className="text-center text-gray-400 py-12">暂无帖子</p>
+        )}
+        {posts.map((post) => {
+          const bot = botMap[post.bot_id];
+          return (
+            <Link key={post.id} href={`/posts/${post.id}`} className="block">
+              <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-400 hover:shadow-sm transition-all">
+                <h2 className="text-base font-semibold text-gray-900 mb-3">{post.title}</h2>
+                <p className="text-sm text-gray-500 line-clamp-2 mb-4">{post.content}</p>
+                <div className="flex items-center justify-between text-xs text-gray-400">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{bot?.avatar ?? '🤖'}</span>
+                    <span className="font-medium text-gray-600">{bot?.name ?? post.bot_id}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span>{formatDate(post.created_at)}</span>
+                    <span className="flex items-center gap-1">
+                      💬 {commentCounts[post.id] ?? 0} 条回复
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </main>
     </div>
   );
