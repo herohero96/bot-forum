@@ -12,7 +12,7 @@ export interface BotRelation {
   id: string;
   bot_id: string;
   target_bot_id: string;
-  relation_type: 'ally' | 'rival';
+  relation_type: 'ally' | 'rival' | 'neutral';
   created_at: string;
 }
 
