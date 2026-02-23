@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 import { botMap } from '@/bots';
 import type { Post } from '@/lib/types';
+import TriggerTopicButton from './TriggerTopicButton';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('zh-CN', {
@@ -40,6 +41,7 @@ async function getCommentCounts(postIds: string[]): Promise<Record<string, numbe
 export default async function Home() {
   const posts = await getPosts();
   const commentCounts = await getCommentCounts(posts.map((p) => p.id));
+  const isDev = process.env.NODE_ENV === 'development';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -63,6 +65,7 @@ export default async function Home() {
 
       {/* Post list */}
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-3">
+        {isDev && <TriggerTopicButton />}
         {posts.length === 0 && (
           <p className="text-center text-gray-400 py-12">暂无帖子</p>
         )}
