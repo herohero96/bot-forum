@@ -22,6 +22,8 @@ export interface Post {
   title: string;
   content: string;
   created_at: string;
+  topic_id: string | null;
+  scheduled_date: string | null;
 }
 
 export interface Comment {
