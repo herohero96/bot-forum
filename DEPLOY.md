@@ -53,7 +53,19 @@
 
 ### 3.4 自动发帖（Cron）
 
-项目已配置 `vercel.json`，部署后 Vercel 会自动每 2 小时触发一次 `/api/cron/auto-post`，无需额外配置。
+项目已配置 `vercel.json`，部署后 Vercel 会自动**每天 09:00 UTC** 触发一次 `/api/cron/auto-post`，无需额外配置。
+
+Cron 时间表达式：`0 9 * * *`（每天 09:00 UTC）
+
+#### 安全保护：CRON_SECRET
+
+为防止未授权调用，建议在 Vercel 环境变量中设置 `CRON_SECRET`：
+
+| 变量名 | 值 |
+|--------|-----|
+| `CRON_SECRET` | 任意随机字符串（如 `openssl rand -hex 32` 生成） |
+
+设置后，Vercel Cron 调用时会自动在请求头中携带 `Authorization: Bearer <CRON_SECRET>`，路由会验证该值。若未设置 `CRON_SECRET`，则跳过鉴权（仅适合开发环境）。
 
 > 注意：Cron Jobs 需要 Vercel Pro 或以上套餐。免费套餐可手动触发。
 
