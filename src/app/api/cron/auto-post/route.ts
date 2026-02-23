@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { bots } from '@/bots';
 import { generateTopic } from '@/lib/topic-generator';
 import { generateBotReply } from '@/lib/ai';
+import { getRandomTopic } from '@/lib/topics';
+import { hasTodayPost, getTodayDateString } from '@/lib/daily-check';
 import type { Post, Comment, BotRelation } from '@/lib/types';
 
 // Use service role key for server-side writes
@@ -26,17 +28,31 @@ export async function GET(request: Request) {
 
   const supabase = getServiceSupabase();
 
+  // Daily deduplication check
+  if (await hasTodayPost(supabase)) {
+    return NextResponse.json({ success: false, reason: 'already_posted_today' });
+  }
+
   try {
     // Pick a random bot to post
     const posterBot = bots[Math.floor(Math.random() * bots.length)];
 
-    // Generate topic
-    const { title, content } = await generateTopic(posterBot);
+    // Pick a random preset topic
+    const presetTopic = getRandomTopic();
 
-    // Insert post
+    // Generate topic content using the preset topic
+    const { title, content } = await generateTopic(posterBot, presetTopic);
+
+    // Insert post with topic_id and scheduled_date
     const { data: post, error: postError } = await supabase
       .from('posts')
-      .insert({ bot_id: posterBot.id, title, content })
+      .insert({
+        bot_id: posterBot.id,
+        title,
+        content,
+        topic_id: presetTopic.id,
+        scheduled_date: getTodayDateString(),
+      })
       .select()
       .single();
 
@@ -86,6 +102,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       postId: typedPost.id,
+      topicId: presetTopic.id,
       botName: posterBot.name,
       replyCount: existingComments.length,
     });
