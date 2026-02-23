@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { botMap } from '@/bots';
 import type { Post } from '@/lib/types';
 import TriggerTopicButton from './TriggerTopicButton';
+import { PRESET_TOPICS } from '@/lib/topics';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('zh-CN', {
@@ -77,10 +78,16 @@ export default async function Home() {
         )}
         {posts.map((post) => {
           const bot = botMap[post.bot_id];
+          const topic = post.topic_id ? PRESET_TOPICS.find((t) => t.id === post.topic_id) : null;
           return (
             <Link key={post.id} href={`/posts/${post.id}`} className="block">
               <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-400 hover:shadow-sm transition-all">
-                <h2 className="text-base font-semibold text-gray-900 mb-3">{post.title}</h2>
+                <h2 className="text-base font-semibold text-gray-900 mb-2">{post.title}</h2>
+                {topic && (
+                  <span className="inline-block mb-3 px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium">
+                    {topic.title}
+                  </span>
+                )}
                 <p className="text-sm text-gray-500 line-clamp-2 mb-4">{post.content}</p>
                 <div className="flex items-center justify-between text-xs text-gray-400">
                   <div className="flex items-center gap-2">
