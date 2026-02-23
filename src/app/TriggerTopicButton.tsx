@@ -15,7 +15,7 @@ export default function TriggerTopicButton() {
       const res = await fetch('/api/cron/auto-post');
       const data = await res.json();
       if (data.success) {
-        setMsg(`✅ 已由 ${data.botName} 发帖`);
+        setMsg(`✅ 已由 ${data.botName} 发帖，话题：${data.topicId}`);
         router.refresh();
       } else {
         setMsg(`❌ ${data.error ?? '发帖失败'}`);

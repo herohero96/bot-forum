@@ -39,10 +39,16 @@ async function getCommentCounts(postIds: string[]): Promise<Record<string, numbe
   return counts;
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ admin?: string }>;
+}) {
   const posts = await getPosts();
   const commentCounts = await getCommentCounts(posts.map((p) => p.id));
   const isDev = process.env.NODE_ENV === 'development';
+  const resolvedParams = await searchParams;
+  const isAdmin = resolvedParams.admin === '1';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -72,7 +78,7 @@ export default async function Home() {
 
       {/* Post list */}
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-3">
-        {isDev && <TriggerTopicButton />}
+        {(isDev || isAdmin) && <TriggerTopicButton />}
         {posts.length === 0 && (
           <p className="text-center text-gray-400 py-12">暂无帖子</p>
         )}
