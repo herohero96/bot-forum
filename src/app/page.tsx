@@ -59,6 +59,12 @@ export default async function Home() {
             >
               幕后视图
             </Link>
+            <Link
+              href="/eval"
+              className="px-4 py-1.5 rounded-full border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors"
+            >
+              评估面板
+            </Link>
           </div>
         </div>
       </nav>

@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import type { BotConfig } from '@/bots';
+import { traceAICall } from './langsmith';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -24,22 +25,28 @@ export async function generateTopic(bot: BotConfig): Promise<TopicPost> {
 
   const userPrompt = `请以「${bot.name}」的身份，发起一个能引发争议和讨论的话题帖子。话题应与你的专长领域相关，但要触及普遍关心的问题。`;
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    max_tokens: 500,
-    temperature: 0.9,
-    response_format: { type: 'json_object' },
-  });
+  return traceAICall(
+    'generate-topic',
+    async () => {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 500,
+        temperature: 0.9,
+        response_format: { type: 'json_object' },
+      });
 
-  const raw = response.choices[0].message.content ?? '{}';
-  const parsed = JSON.parse(raw) as { title?: string; content?: string };
+      const raw = response.choices[0].message.content ?? '{}';
+      const parsed = JSON.parse(raw) as { title?: string; content?: string };
 
-  return {
-    title: (parsed.title ?? '无标题').slice(0, 40),
-    content: parsed.content ?? '',
-  };
+      return {
+        title: (parsed.title ?? '无标题').slice(0, 40),
+        content: parsed.content ?? '',
+      };
+    },
+    { botName: bot.name }
+  );
 }

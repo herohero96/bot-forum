@@ -104,6 +104,12 @@ export default function BackstagePage() {
             <span className="px-4 py-1.5 rounded-full bg-gray-900 text-white text-sm font-medium">
               幕后视图
             </span>
+            <Link
+              href="/eval"
+              className="px-4 py-1.5 rounded-full border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors"
+            >
+              评估面板
+            </Link>
           </div>
         </div>
       </nav>

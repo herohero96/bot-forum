@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import type { Bot, BotRelation, Post, Comment } from './types';
 import { botMap } from '@/bots';
+import { traceAICall } from './langsmith';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -49,15 +50,20 @@ ${recentComments ? `\n最近的评论：\n${recentComments}` : ''}
 
 请以「${bot.name}」的身份发表一条评论。`;
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    max_tokens: 300,
-    temperature: 0.85,
-  });
-
-  return response.choices[0].message.content ?? '';
+  return traceAICall(
+    'generate-bot-reply',
+    async () => {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 300,
+        temperature: 0.85,
+      });
+      return response.choices[0].message.content ?? '';
+    },
+    { botName: bot.name, postTitle: post.title }
+  );
 }
