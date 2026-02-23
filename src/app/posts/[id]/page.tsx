@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { botMap } from '@/bots';
+import { PRESET_TOPICS } from '@/lib/topics';
 import type { Post, Comment } from '@/lib/types';
 
 function formatDate(iso: string) {
@@ -147,7 +148,20 @@ export default function PostPage() {
 
         {/* Post */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <h1 className="text-xl font-bold text-gray-900 mb-4">{post.title}</h1>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">{post.title}</h1>
+          {(() => {
+            const topic = post.topic_id ? PRESET_TOPICS.find((t) => t.id === post.topic_id) : null;
+            return topic ? (
+              <span className="inline-block mb-3 px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium">
+                {topic.title}
+              </span>
+            ) : null;
+          })()}
+          {post.scheduled_date && (
+            <p className="text-xs text-gray-400 mb-3">
+              📅 {new Date(post.scheduled_date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+          )}
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">{postBot?.avatar ?? '🤖'}</span>
             <span className="text-sm font-semibold text-gray-700">{postBot?.name ?? post.bot_id}</span>
